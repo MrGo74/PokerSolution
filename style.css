@@ -1,0 +1,172 @@
+/* --- Variables de couleur --- */
+:root {
+    --table-green: #006400;
+    --table-wood: #8B4513;
+    --card-back: #b50000;
+    --card-front: #ffffff;
+    --text-light: #f0f0f0;
+    --text-dark: #333;
+}
+
+/* --- Styles Généraux --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* --- Table de Poker --- */
+#poker-table {
+    background-color: var(--table-green);
+    width: 900px;
+    height: 550px;
+    border-radius: 275px;
+    border: 15px solid var(--table-wood);
+    position: relative;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* --- Cartes --- */
+.card-area {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-placeholder, .card {
+    width: 60px;
+    height: 85px;
+    border-radius: 5px;
+    background-color: var(--card-back);
+    border: 2px solid var(--card-front);
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    color: var(--text-dark);
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/* Style pour les cartes retournées */
+.card {
+    background-color: var(--card-front);
+}
+
+
+/* --- Zone Centrale (Pot et Cartes Communes) --- */
+#community-cards {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    flex-direction: column;
+    gap: 15px;
+}
+
+.pot-display {
+    color: var(--text-light);
+    font-size: 20px;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.3);
+    padding: 5px 15px;
+    border-radius: 10px;
+}
+
+/* --- Sièges des Joueurs --- */
+.player-seat {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 150px;
+}
+
+.player-info {
+    background-color: rgba(0,0,0,0.4);
+    color: var(--text-light);
+    padding: 5px 10px;
+    border-radius: 8px;
+    text-align: center;
+    width: 100%;
+}
+
+.player-name {
+    display: block;
+    font-weight: bold;
+}
+
+.player-stack {
+    font-size: 0.9em;
+}
+
+.dealer-button {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: #E0E0E0;
+    color: #000;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #555;
+    position: absolute;
+    /* Le positionnement exact se fera en JS, mais on donne une base */
+    transform: translate(40px, -15px);
+}
+
+/* --- Positionnement des joueurs --- */
+/* Joueur du bas (humain) */
+#player-1 { top: 88%; left: 50%; transform: translate(-50%, -50%); }
+/* Gauche */
+#player-2 { top: 50%; left: 8%; transform: translate(-50%, -50%); }
+#player-3 { top: 15%; left: 25%; transform: translate(-50%, -50%); }
+/* Haut */
+#player-4 { top: 12%; left: 50%; transform: translate(-50%, -50%); }
+/* Droite */
+#player-5 { top: 15%; left: 75%; transform: translate(-50%, -50%); }
+#player-6 { top: 50%; left: 92%; transform: translate(-50%, -50%); }
+
+/* --- Contrôles du Joueur --- */
+#player-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#player-controls button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+#player-controls button:hover {
+    background-color: #45a049;
+}
+
+#player-controls input {
+    width: 80px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Texas Hold'em</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button id="start-hand-button">Commencer une nouvelle main</button>
+    <div id="game-container">
+        <h1>Poker 6-Max Texas Hold'em</h1>
+
+        <div id="poker-table">
+            <div id="community-cards" class="card-area">
+                <div class="pot-display">Pot: <span id="pot-amount">0</span></div>
+                <div class="card-placeholder"></div>
+                <div class="card-placeholder"></div>
+                <div class="card-placeholder"></div>
+                <div class="card-placeholder"></div>
+                <div class="card-placeholder"></div>
+            </div>
+
+            <!-- Joueurs -->
+            <div class="player-seat" id="player-1">
+                <div class="player-info">
+                    <span class="player-name">Joueur 1</span>
+                    <span class="player-stack">1000</span>
+                </div>
+                <div class="player-cards card-area">
+                    <div class="card-placeholder"></div>
+                    <div class="card-placeholder"></div>
+                </div>
+                <div class="dealer-button" style="display: none;">D</div>
+            </div>
+            <div class="player-seat" id="player-2">
+                 <div class="player-info">
+                    <span class="player-name">Joueur 2</span>
+                    <span class="player-stack">1000</span>
+                </div>
+                <div class="player-cards card-area">
+                    <div class="card-placeholder"></div>
+                    <div class="card-placeholder"></div>
+                </div>
+                <div class="dealer-button" style="display: none;">D</div>
+            </div>
+            <div class="player-seat" id="player-3">
+                 <div class="player-info">
+                    <span class="player-name">Joueur 3</span>
+                    <span class="player-stack">1000</span>
+                </div>
+                <div class="player-cards card-area">
+                    <div class="card-placeholder"></div>
+                    <div class="card-placeholder"></div>
+                </div>
+                <div class="dealer-button" style="display: none;">D</div>
+            </div>
+            <div class="player-seat" id="player-4">
+                 <div class="player-info">
+                    <span class="player-name">Joueur 4</span>
+                    <span class="player-stack">1000</span>
+                </div>
+                <div class="player-cards card-area">
+                    <div class="card-placeholder"></div>
+                    <div class="card-placeholder"></div>
+                </div>
+                <div class="dealer-button" style="display: none;">D</div>
+            </div>
+            <div class="player-seat" id="player-5">
+                 <div class="player-info">
+                    <span class="player-name">Joueur 5</span>
+                    <span class="player-stack">1000</span>
+                </div>
+                <div class="player-cards card-area">
+                    <div class="card-placeholder"></div>
+                    <div class="card-placeholder"></div>
+                </div>
+                <div class="dealer-button" style="display: none;">D</div>
+            </div>
+            <div class="player-seat" id="player-6">
+                 <div class="player-info">
+                    <span class="player-name">Joueur 6</span>
+                    <span class="player-stack">1000</span>
+                </div>
+                <div class="player-cards card-area">
+                    <div class="card-placeholder"></div>
+                    <div class="card-placeholder"></div>
+                </div>
+                <div class="dealer-button" style="display: none;">D</div>
+            </div>
+        </div>
+
+        <div id="player-controls">
+            <button id="fold-button">Se Coucher</button>
+            <button id="check-button">Checker</button>
+            <button id="call-button">Suivre</button>
+            <button id="bet-button">Miser</button>
+            <input type="number" id="bet-amount" value="20" min="20">
+            <button id="raise-button">Relancer</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
