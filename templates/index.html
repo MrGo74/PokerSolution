@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Texas Hold'em (Python Backend)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="game-container">
+        <h1>Poker 6-Max Texas Hold'em</h1>
+        <button id="start-hand-button">Commencer une nouvelle main</button>
+        <h2 id="game-status">Connectez-vous au serveur et commencez une partie !</h2>
+
+        <div id="poker-table">
+            <div id="community-cards" class="card-area">
+                <div class="pot-display">Pot: <span id="pot-amount">0</span></div>
+            </div>
+
+            <!-- Les sièges des joueurs seront générés par JS -->
+
+        </div>
+
+        <div id="game-log">
+            <p>Le journal du jeu apparaîtra ici.</p>
+        </div>
+
+        <div id="player-controls" style="display: none;">
+            <button id="fold-button">Se Coucher</button>
+            <button id="call-button">Suivre</button>
+            <button id="check-button">Checker</button>
+            <div>
+                <button id="bet-button">Miser</button>
+                <button id="raise-button">Relancer</button>
+                <input type="number" id="bet-amount" value="20" min="20">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

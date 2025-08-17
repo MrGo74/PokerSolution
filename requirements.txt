@@ -1,0 +1,5 @@
+Flask==2.2.2
+Werkzeug<3.0
+Flask-SocketIO==5.3.3
+PyPokerEngine==1.0.1
+eventlet==0.33.1
