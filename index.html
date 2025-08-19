@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur d'Équité de Poker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Calculateur d'Équité de Poker</h1>
+    <div id="equity-calculator">
+        <div class="hand-input">
+            <label for="hand1">Main 1:</label>
+            <input type="text" id="hand1" placeholder="Ex: AsKd">
+        </div>
+        <div class="hand-input">
+            <label for="hand2">Main 2:</label>
+            <input type="text" id="hand2" placeholder="Ex: 7h7c">
+        </div>
+        <button id="calculate-btn">Calculer l'Équité</button>
+        <div id="results">
+            <h2>Résultats</h2>
+            <p id="player1-equity">Main 1: --%</p>
+            <p id="player2-equity">Main 2: --%</p>
+            <p id="tie-equity">Égalité: --%</p>
+        </div>
+    </div>
+    <script src="poker.js"></script>
+</body>
+</html>
