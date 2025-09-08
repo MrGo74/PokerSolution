@@ -2,6 +2,7 @@ from pypokerengine.players import BasePokerPlayer
 from pypokerengine.api.game import setup_config, start_poker
 import random
 import joblib
+import os
 
 class FishPlayer(BasePokerPlayer):  # Always calls
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -90,8 +91,10 @@ class ModelPlayer(BasePokerPlayer):
 def main():
     # Load the trained model and label encoder
     try:
-        model = joblib.load('/app/poker_project/poker_model.joblib')
-        le = joblib.load('/app/poker_project/label_encoder.joblib')
+        model_path = os.path.join(os.path.dirname(__file__), 'poker_model.joblib')
+        encoder_path = os.path.join(os.path.dirname(__file__), 'label_encoder.joblib')
+        model = joblib.load(model_path)
+        le = joblib.load(encoder_path)
     except FileNotFoundError:
         print("Model not found. Please run train.py to train and save the model.")
         return

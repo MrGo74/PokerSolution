@@ -1,7 +1,10 @@
 import pandas as pd
 import json
+import os
 
-def load_and_preprocess_data(filepath='/app/poker_project/poker_data.csv'):
+def load_and_preprocess_data(filepath=None):
+    if filepath is None:
+        filepath = os.path.join(os.path.dirname(__file__), 'poker_data.csv')
     df = pd.read_csv(filepath)
 
     # Parse the round_state JSON
@@ -79,8 +82,10 @@ def train_model(df):
 
     # Save the model and encoder
     import joblib
-    joblib.dump(model, '/app/poker_project/poker_model.joblib')
-    joblib.dump(le, '/app/poker_project/label_encoder.joblib')
+    model_path = os.path.join(os.path.dirname(__file__), 'poker_model.joblib')
+    encoder_path = os.path.join(os.path.dirname(__file__), 'label_encoder.joblib')
+    joblib.dump(model, model_path)
+    joblib.dump(le, encoder_path)
     print("Model and label encoder saved.")
 
     return model

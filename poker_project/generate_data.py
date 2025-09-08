@@ -6,7 +6,7 @@ import pandas as pd
 import os
 
 DATA_LOG = []
-DATA_FILE = '/app/poker_project/poker_data.csv'
+DATA_FILE = os.path.join(os.path.dirname(__file__), 'poker_data.csv')
 
 class DataLogger:
     def log_action(self, hole_card, round_state, action, amount):
