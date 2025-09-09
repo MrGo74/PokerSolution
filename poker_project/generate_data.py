@@ -6,19 +6,17 @@ import sys
 import argparse
 import random
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from poker_project.players import SharkPlayer
+from poker_project.players import SharkPlayer, preprocess_state
 
 DATA_LOG = []
 DATA_FILE = os.path.join(os.path.dirname(__file__), 'poker_data.csv')
 
 class DataLogger:
-    def log_action(self, hole_card, round_state, action, amount):
-        log_entry = {
-            'hole_card': str(hole_card),
-            'round_state': json.dumps(round_state),
-            'action': action,
-            'amount': amount
-        }
+    def log_action(self, hole_card, round_state, action, amount, my_uuid):
+        features_df = preprocess_state(hole_card, round_state, my_uuid)
+        log_entry = features_df.to_dict(orient='records')[0]
+        log_entry['action'] = action
+        log_entry['amount'] = amount
         DATA_LOG.append(log_entry)
 
     def save_log(self):

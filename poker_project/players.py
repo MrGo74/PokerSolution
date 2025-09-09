@@ -12,8 +12,68 @@ def encode_card(card):
     suit = suits.find(card[0]) + 1
     return suit * 100 + rank
 
-def preprocess_state(hole_card, round_state):
+def get_position(player_seat, dealer_btn_pos, num_players):
+    if num_players == 2:
+        return "SB" if player_seat == dealer_btn_pos else "BB"
+
+    positions_map = {
+        6: ["SB", "BB", "UTG", "MP", "CO", "BTN"],
+        9: ["SB", "BB", "UTG", "UTG+1", "MP1", "MP2", "HJ", "CO", "BTN"]
+    }
+
+    if num_players not in positions_map:
+        return f"Seat {player_seat}"
+
+    relative_position = (player_seat - dealer_btn_pos - 1 + num_players) % num_players
+
+    # Adjust for standard poker position naming
+    # In poker, SB is at dealer_btn_pos + 1, BB is dealer_btn_pos + 2
+    if relative_position == 0: # Small Blind
+        return positions_map[num_players][0]
+    if relative_position == 1: # Big Blind
+        return positions_map[num_players][1]
+
+    # Other positions relative to the blinds
+    # The player after BB is UTG
+    # The player before SB is the Button
+
+    # Let's try a simpler mapping based on offset from dealer
+    # This is a bit tricky because the seat indices wrap around.
+
+    # A more direct approach:
+    # 1. SB is (dealer_btn + 1) % num_players
+    # 2. BB is (dealer_btn + 2) % num_players
+    # 3. BTN is dealer_btn
+
+    if player_seat == (dealer_btn_pos + 1) % num_players: return positions_map[num_players][0] # SB
+    if player_seat == (dealer_btn_pos + 2) % num_players: return positions_map[num_players][1] # BB
+    if player_seat == dealer_btn_pos: return positions_map[num_players][-1] # BTN
+
+    # For other positions, it's more complex. Let's use a simpler logic for now
+    # This is a simplification. For a 6-max game:
+    # SB, BB, UTG, MP, CO, BTN
+    # 0,  1,   2,  3,  4,  5 (relative to SB)
+
+    # Let's find the SB seat index
+    sb_seat = (dealer_btn_pos + 1) % num_players
+
+    # Calculate seats relative to the SB
+    relative_seat = (player_seat - sb_seat + num_players) % num_players
+
+    if num_players == 6:
+        # SB, BB, UTG, MP, CO, BTN
+        pos_names = ["SB", "BB", "UTG", "MP", "CO", "BTN"]
+        return pos_names[relative_seat]
+    if num_players == 9:
+        pos_names = ["SB", "BB", "UTG", "UTG+1", "MP1", "MP2", "HJ", "CO", "BTN"]
+        return pos_names[relative_seat]
+
+    return f"Seat {player_seat}"
+
+def preprocess_state(hole_card, round_state, my_uuid):
     features_dict = {}
+
+    # Existing features
     features_dict['hole_card_1'] = encode_card(hole_card[0] if len(hole_card) > 0 else None)
     features_dict['hole_card_2'] = encode_card(hole_card[1] if len(hole_card) > 1 else None)
     community_cards = round_state['community_card']
@@ -21,11 +81,39 @@ def preprocess_state(hole_card, round_state):
         features_dict[f'community_card_{i+1}'] = encode_card(community_cards[i] if i < len(community_cards) else None)
     features_dict['pot.main.amount'] = round_state['pot']['main']['amount']
     features_dict['round_count'] = round_state['round_count']
+
+    # New features: Position and Action History
+    num_players = len(round_state['seats'])
+    my_seat = -1
+    for i, seat in enumerate(round_state['seats']):
+        if seat['uuid'] == my_uuid:
+            my_seat = i
+            break
+
+    dealer_btn_pos = round_state['dealer_btn']
+    position_str = get_position(my_seat, dealer_btn_pos, num_players)
+
+    # One-hot encode position
+    position_map = { "SB": 0, "BB": 1, "UTG": 2, "MP": 3, "CO": 4, "BTN": 5, "UTG+1": 6, "MP1": 7, "MP2": 8, "HJ": 9}
+    features_dict['position'] = position_map.get(position_str, -1)
+
+    # Action history (last 5 actions)
+    action_hist = round_state.get('action_histories', {}).get(round_state.get('street'), [])
+    for i in range(5):
+        action_name = 'none'
+        if i < len(action_hist):
+            action_name = action_hist[i].get('action', 'none')
+
+        action_map = {'fold': 1, 'call': 2, 'raise': 3, 'none': 0}
+        features_dict[f'action_{i+1}'] = action_map.get(action_name, 0)
+
     feature_names = [
         'hole_card_1', 'hole_card_2', 'community_card_1', 'community_card_2',
         'community_card_3', 'community_card_4', 'community_card_5',
-        'pot.main.amount', 'round_count'
+        'pot.main.amount', 'round_count', 'position',
+        'action_1', 'action_2', 'action_3', 'action_4', 'action_5'
     ]
+
     return pd.DataFrame([features_dict], columns=feature_names)
 
 # Player Classes
@@ -35,7 +123,7 @@ class FishPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         call_action_info = valid_actions[1]
         action, amount = call_action_info["action"], call_action_info["amount"]
-        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount)
+        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount, self.uuid)
         return action, amount
     def receive_game_start_message(self, game_info): pass
     def receive_round_start_message(self, round_count, hole_card, seats): pass
@@ -49,7 +137,7 @@ class FoldPlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         fold_action_info = valid_actions[0]
         action, amount = fold_action_info["action"], fold_action_info["amount"]
-        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount)
+        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount, self.uuid)
         return action, amount
     def receive_game_start_message(self, game_info): pass
     def receive_round_start_message(self, round_count, hole_card, seats): pass
@@ -63,7 +151,7 @@ class RaisePlayer(BasePokerPlayer):
     def declare_action(self, valid_actions, hole_card, round_state):
         raise_action_info = valid_actions[2]
         action, amount = raise_action_info["action"], raise_action_info["amount"]["max"]
-        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount)
+        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount, self.uuid)
         return action, amount
     def receive_game_start_message(self, game_info): pass
     def receive_round_start_message(self, round_count, hole_card, seats): pass
@@ -89,7 +177,7 @@ class RandomPlayer(BasePokerPlayer):
                 action, amount = call_action_info["action"], call_action_info["amount"]
             else:
                 action, amount = raise_action_info["action"], random.randint(raise_action_info["amount"]["min"], raise_action_info["amount"]["max"])
-        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount)
+        if self.data_logger: self.data_logger.log_action(hole_card, round_state, action, amount, self.uuid)
         return action, amount
     def receive_game_start_message(self, game_info): pass
     def receive_round_start_message(self, round_count, hole_card, seats): pass
@@ -102,7 +190,7 @@ class ModelPlayer(BasePokerPlayer):
         self.model = model
         self.le = le
     def declare_action(self, valid_actions, hole_card, round_state):
-        features = preprocess_state(hole_card, round_state)
+        features = preprocess_state(hole_card, round_state, self.uuid)
         action_encoded = self.model.predict(features)[0]
         action_str = self.le.inverse_transform([action_encoded])[0]
         for valid_action in valid_actions:
@@ -130,7 +218,13 @@ class HumanPlayer(BasePokerPlayer):
         big_blind = self.small_blind_amount * 2
         pot_amount = round_state['pot']['main']['amount']
         pot_bb = pot_amount / big_blind
-        print("---------- Your Turn ----------")
+
+        num_players = len(round_state['seats'])
+        my_seat = [s['name'] for s in round_state['seats']].index('Human')
+        dealer_btn_pos = round_state['dealer_btn']
+        position = get_position(my_seat, dealer_btn_pos, num_players)
+
+        print(f"---------- Your Turn (Position: {position}) ----------")
         print(f"Hole card: {hole_card}")
         print(f"Community card: {round_state['community_card']}")
         print(f"Pot: {pot_amount} ({pot_bb:.1f}bb)")
@@ -233,7 +327,7 @@ class SharkPlayer(BasePokerPlayer):
             action, amount = valid_actions[1]['action'], valid_actions[1]['amount'] # Call instead
 
         if self.data_logger:
-            self.data_logger.log_action(hole_card, round_state, action, amount)
+            self.data_logger.log_action(hole_card, round_state, action, amount, self.uuid)
 
         return action, amount
 
