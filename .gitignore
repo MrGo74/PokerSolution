@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+poker_project/poker_data.csv
+poker_project/poker_model.joblib
+poker_project/label_encoder.joblib
