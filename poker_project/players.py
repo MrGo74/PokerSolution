@@ -123,18 +123,26 @@ class ModelPlayer(BasePokerPlayer):
     def receive_round_result_message(self, winners, hand_info, round_state): pass
 
 class HumanPlayer(BasePokerPlayer):
+    def __init__(self, small_blind_amount=5):
+        self.small_blind_amount = small_blind_amount
+
     def declare_action(self, valid_actions, hole_card, round_state):
+        big_blind = self.small_blind_amount * 2
+        pot_amount = round_state['pot']['main']['amount']
+        pot_bb = pot_amount / big_blind
         print("---------- Your Turn ----------")
         print(f"Hole card: {hole_card}")
         print(f"Community card: {round_state['community_card']}")
-        print(f"Pot: {round_state['pot']['main']['amount']}")
+        print(f"Pot: {pot_amount} ({pot_bb:.1f}bb)")
         print("---------------------------------")
         for i, action_info in enumerate(valid_actions):
             action = action_info["action"]
             if action == "raise":
                 min_amount = action_info["amount"]["min"]
                 max_amount = action_info["amount"]["max"]
-                print(f"{i}: {action} (min: {min_amount}, max: {max_amount})")
+                min_bb = min_amount / big_blind
+                max_bb = max_amount / big_blind
+                print(f"{i}: {action} (min: {min_amount} ({min_bb:.1f}bb), max: {max_amount} ({max_bb:.1f}bb))")
             else:
                 print(f"{i}: {action}")
         while True:
@@ -143,8 +151,10 @@ class HumanPlayer(BasePokerPlayer):
                 chosen_action = valid_actions[action_index]
                 action = chosen_action["action"]
                 if action == "raise":
-                    amount = int(input(f"Enter raise amount ({chosen_action['amount']['min']} - {chosen_action['amount']['max']}): "))
-                    if chosen_action['amount']['min'] <= amount <= chosen_action['amount']['max']:
+                    min_raise = chosen_action['amount']['min']
+                    max_raise = chosen_action['amount']['max']
+                    amount = int(input(f"Enter raise amount ({min_raise} - {max_raise}): "))
+                    if min_raise <= amount <= max_raise:
                         return action, amount
                     else:
                         print("Invalid raise amount.")
@@ -152,27 +162,42 @@ class HumanPlayer(BasePokerPlayer):
                     return action, chosen_action["amount"]
             except (ValueError, IndexError):
                 print("Invalid input. Please enter a valid action index.")
+
     def receive_game_start_message(self, game_info):
         print("----- Game Start -----")
+        big_blind = self.small_blind_amount * 2
         for player in game_info['seats']:
-            print(f"{player['name']}: stack {player['stack']}")
+            stack_bb = player['stack'] / big_blind
+            print(f"{player['name']}: stack {player['stack']} ({stack_bb:.1f}bb)")
         print("----------------------")
+
     def receive_round_start_message(self, round_count, hole_card, seats):
         print(f"\n----- Round {round_count} Start -----")
         print(f"Your hole card is {hole_card}")
         print("---------------------------")
+
     def receive_street_start_message(self, street, round_state):
         print(f"\n--- Street '{street}' Start ---")
         print(f"Community card: {round_state['community_card']}")
         print("-----------------------------")
+
     def receive_game_update_message(self, action, round_state):
         player_uuid = action['player_uuid']
         player_name = "Unknown"
+        player_stack = 0
         for player in round_state['seats']:
             if player['uuid'] == player_uuid:
                 player_name = player['name']
+                player_stack = player['stack']
                 break
-        print(f"\n>> {player_name} declared {action['action']}({action.get('amount', '')})")
+
+        big_blind = self.small_blind_amount * 2
+        stack_bb = player_stack / big_blind
+        amount = action.get('amount', 0)
+        amount_bb = amount / big_blind
+
+        print(f"\n>> {player_name} ({stack_bb:.1f}bb) declared {action['action']}({amount} ({amount_bb:.1f}bb))")
+
     def receive_round_result_message(self, winners, hand_info, round_state):
         print("\n----- Round Result -----")
         for winner_info in winners:
@@ -180,8 +205,9 @@ class HumanPlayer(BasePokerPlayer):
         print("------------------------")
 
 class SharkPlayer(BasePokerPlayer):
-    def __init__(self, data_logger=None):
+    def __init__(self, data_logger=None, aggression=0.5):
         self.data_logger = data_logger
+        self.aggression = aggression
 
     def declare_action(self, valid_actions, hole_card, round_state):
         community_card = round_state['community_card']
@@ -192,9 +218,12 @@ class SharkPlayer(BasePokerPlayer):
                 community_card=gen_cards(community_card)
                 )
 
-        if win_rate >= 0.7:
+        raise_threshold = 0.7 - (self.aggression * 0.2)  # More aggressive => lower raise threshold
+        call_threshold = 0.4 - (self.aggression * 0.2)   # More aggressive => lower call threshold
+
+        if win_rate >= raise_threshold:
             action, amount = valid_actions[2]['action'], valid_actions[2]['amount']['max'] # Raise max
-        elif win_rate >= 0.4:
+        elif win_rate >= call_threshold:
             action, amount = valid_actions[1]['action'], valid_actions[1]['amount'] # Call
         else:
             action, amount = valid_actions[0]['action'], valid_actions[0]['amount'] # Fold

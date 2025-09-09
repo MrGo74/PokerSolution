@@ -15,8 +15,9 @@ def main():
         print("Model not found. Please run train.py to train and save the model.")
         return
 
-    config = setup_config(max_round=100, initial_stack=1000, small_blind_amount=5)
-    config.register_player(name="Human", algorithm=HumanPlayer())
+    small_blind_amount = 5
+    config = setup_config(max_round=100, initial_stack=1000, small_blind_amount=small_blind_amount)
+    config.register_player(name="Human", algorithm=HumanPlayer(small_blind_amount=small_blind_amount))
     for i in range(6):
         config.register_player(name=f"AI_Player_{i+1}", algorithm=ModelPlayer(model, le))
 
