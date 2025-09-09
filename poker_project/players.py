@@ -1,4 +1,5 @@
 from pypokerengine.players import BasePokerPlayer
+from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rate
 import random
 import pandas as pd
 
@@ -165,9 +166,50 @@ class HumanPlayer(BasePokerPlayer):
         print(f"Community card: {round_state['community_card']}")
         print("-----------------------------")
     def receive_game_update_message(self, action, round_state):
-        print(f"\n>> {action['player_name']} declared {action['action']}({action.get('amount', '')})")
+        player_uuid = action['player_uuid']
+        player_name = "Unknown"
+        for player in round_state['seats']:
+            if player['uuid'] == player_uuid:
+                player_name = player['name']
+                break
+        print(f"\n>> {player_name} declared {action['action']}({action.get('amount', '')})")
     def receive_round_result_message(self, winners, hand_info, round_state):
         print("\n----- Round Result -----")
         for winner_info in winners:
             print(f"{winner_info['name']} won {winner_info['stack']}")
         print("------------------------")
+
+class SharkPlayer(BasePokerPlayer):
+    def __init__(self, data_logger=None):
+        self.data_logger = data_logger
+
+    def declare_action(self, valid_actions, hole_card, round_state):
+        community_card = round_state['community_card']
+        win_rate = estimate_hole_card_win_rate(
+                nb_simulation=20,
+                nb_player=len(round_state['seats']),
+                hole_card=gen_cards(hole_card),
+                community_card=gen_cards(community_card)
+                )
+
+        if win_rate >= 0.7:
+            action, amount = valid_actions[2]['action'], valid_actions[2]['amount']['max'] # Raise max
+        elif win_rate >= 0.4:
+            action, amount = valid_actions[1]['action'], valid_actions[1]['amount'] # Call
+        else:
+            action, amount = valid_actions[0]['action'], valid_actions[0]['amount'] # Fold
+
+        # Fallback if action is not possible (e.g. cannot raise)
+        if action == 'raise' and valid_actions[2]['amount']['min'] == -1:
+            action, amount = valid_actions[1]['action'], valid_actions[1]['amount'] # Call instead
+
+        if self.data_logger:
+            self.data_logger.log_action(hole_card, round_state, action, amount)
+
+        return action, amount
+
+    def receive_game_start_message(self, game_info): pass
+    def receive_round_start_message(self, round_count, hole_card, seats): pass
+    def receive_street_start_message(self, street, round_state): pass
+    def receive_game_update_message(self, action, round_state): pass
+    def receive_round_result_message(self, winners, hand_info, round_state): pass
